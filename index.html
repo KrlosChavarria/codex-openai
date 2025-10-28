@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Interactive USA Globe</title>
+    <link
+      rel="preconnect"
+      href="https://fonts.googleapis.com"
+    />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: linear-gradient(160deg, #f7f9fc 0%, #e5efff 50%, #f8f9ff 100%);
+        --text-primary: #111827;
+        --text-secondary: #4b5563;
+        --accent: #2563eb;
+        --accent-light: rgba(37, 99, 235, 0.18);
+        --card: rgba(255, 255, 255, 0.8);
+        --border: rgba(15, 23, 42, 0.08);
+        font-family: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background: var(--bg);
+        color: var(--text-primary);
+        display: flex;
+        justify-content: center;
+        padding: clamp(1rem, 3vw, 2rem);
+      }
+
+      .app-shell {
+        width: min(1200px, 100%);
+        background: var(--card);
+        border-radius: 28px;
+        box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        border: 1px solid var(--border);
+        backdrop-filter: blur(12px);
+      }
+
+      header {
+        padding: clamp(1.2rem, 2.8vw, 2rem) clamp(1.4rem, 3vw, 2.4rem);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 1rem;
+        background: rgba(255, 255, 255, 0.65);
+      }
+
+      header h1 {
+        margin: 0;
+        font-size: clamp(1.4rem, 2.4vw, 2rem);
+        letter-spacing: -0.01em;
+      }
+
+      header span {
+        font-weight: 600;
+        color: var(--accent);
+        text-transform: uppercase;
+        font-size: clamp(0.7rem, 1vw, 0.85rem);
+        letter-spacing: 0.18em;
+      }
+
+      .header-badge {
+        background: rgba(37, 99, 235, 0.12);
+        color: var(--accent);
+        padding: 0.55rem 1rem;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.85rem;
+        letter-spacing: 0.05em;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8),
+          0 10px 24px rgba(37, 99, 235, 0.18);
+        white-space: nowrap;
+      }
+
+      .content {
+        display: flex;
+        gap: clamp(1.5rem, 3vw, 3rem);
+        padding: clamp(1.4rem, 3vw, 2.4rem);
+        position: relative;
+      }
+
+      .globe-card {
+        flex: 1;
+        position: relative;
+        aspect-ratio: 1;
+        min-height: 360px;
+        background: rgba(255, 255, 255, 0.75);
+        border-radius: 24px;
+        border: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8),
+          0 20px 40px rgba(37, 99, 235, 0.12);
+      }
+
+      svg {
+        width: 100%;
+        height: 100%;
+        touch-action: none;
+      }
+
+      .sidebar {
+        flex-basis: min(320px, 100%);
+        background: rgba(255, 255, 255, 0.72);
+        border-radius: 24px;
+        border: 1px solid var(--border);
+        padding: clamp(1.4rem, 3vw, 2.2rem);
+        display: flex;
+        flex-direction: column;
+        gap: 1.1rem;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85),
+          0 16px 32px rgba(15, 23, 42, 0.06);
+      }
+
+      .sidebar h2 {
+        margin: 0;
+        font-size: clamp(1.5rem, 2.2vw, 2rem);
+      }
+
+      .sidebar .meta {
+        display: flex;
+        gap: 1.2rem;
+        flex-wrap: wrap;
+      }
+
+      .meta .pill {
+        background: var(--accent-light);
+        color: var(--accent);
+        padding: 0.45rem 0.8rem;
+        border-radius: 999px;
+        font-weight: 600;
+        font-size: 0.9rem;
+      }
+
+      .sidebar .summary {
+        margin: 0;
+        line-height: 1.6;
+        color: var(--text-secondary);
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+        gap: 0.8rem;
+      }
+
+      .stat-card {
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 18px;
+        padding: 0.9rem 1.1rem;
+        border: 1px solid rgba(37, 99, 235, 0.16);
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+
+      .stat-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--accent);
+        letter-spacing: 0.16em;
+        font-weight: 600;
+      }
+
+      .stat-value {
+        font-size: 1.2rem;
+        font-weight: 700;
+      }
+
+      .legend {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-top: auto;
+        padding-top: 0.5rem;
+        border-top: 1px solid rgba(148, 163, 184, 0.2);
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+      }
+
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+
+      .legend span::before {
+        content: "";
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+
+      .legend span:nth-child(1)::before {
+        background: rgba(37, 99, 235, 0.25);
+        border: 1px solid rgba(37, 99, 235, 0.5);
+      }
+
+      .legend span:nth-child(2)::before {
+        background: rgba(15, 23, 42, 0.12);
+        border: 1px solid rgba(15, 23, 42, 0.32);
+      }
+
+      .tooltip {
+        position: absolute;
+        pointer-events: none;
+        background: #0f172a;
+        color: white;
+        padding: 0.45rem 0.75rem;
+        border-radius: 10px;
+        font-size: 0.85rem;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.35);
+        opacity: 0;
+        transform: translate(-50%, -120%);
+        transition: opacity 180ms ease, transform 220ms ease;
+        white-space: nowrap;
+        z-index: 10;
+      }
+
+      .globe-label {
+        position: absolute;
+        top: 1.2rem;
+        left: 1.4rem;
+        padding: 0.4rem 0.8rem;
+        background: rgba(15, 23, 42, 0.75);
+        color: white;
+        border-radius: 999px;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.18em;
+        font-weight: 600;
+        box-shadow: 0 8px 16px rgba(15, 23, 42, 0.25);
+      }
+
+      @media (max-width: 960px) {
+        .content {
+          flex-direction: column;
+        }
+
+        .globe-card {
+          min-height: 320px;
+        }
+
+        .sidebar {
+          flex-basis: auto;
+        }
+      }
+
+      @media (max-width: 600px) {
+        body {
+          padding: 1rem;
+        }
+
+        .app-shell {
+          border-radius: 20px;
+        }
+
+        header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 0.4rem;
+        }
+
+        header span {
+          font-size: 0.7rem;
+        }
+
+        .legend {
+          font-size: 0.8rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header>
+        <div>
+          <span>United States Atlas</span>
+          <h1>Explore States on an Interactive Globe</h1>
+        </div>
+        <div class="header-badge">Tap a state to learn more</div>
+      </header>
+      <main class="content">
+        <div class="globe-card">
+          <div class="globe-label">USA</div>
+          <svg id="globe"></svg>
+          <div class="tooltip" id="tooltip"></div>
+        </div>
+        <aside class="sidebar">
+          <h2 id="state-name">United States of America</h2>
+          <div class="meta">
+            <div class="pill" id="state-capital">Capital — Washington, D.C.</div>
+            <div class="pill" id="state-region">Region — North America</div>
+          </div>
+          <p class="summary" id="state-summary">
+            Rotate the globe and select any state to reveal quick facts, population
+            insights, and a highlight that captures what makes each place unique.
+          </p>
+          <div class="stats">
+            <div class="stat-card">
+              <span class="stat-label">Population</span>
+              <span class="stat-value" id="state-pop">331M</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-label">Nickname</span>
+              <span class="stat-value" id="state-nickname">The United States</span>
+            </div>
+          </div>
+          <div class="legend">
+            <span>Tap or click to focus</span>
+            <span>Hover to preview</span>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+    <script>
+      const stateDetails = {
+        Alabama: {
+          capital: "Montgomery",
+          region: "Southeast",
+          population: "5.1M",
+          nickname: "Yellowhammer State",
+          summary:
+            "Birthplace of the Civil Rights Movement with rich musical traditions and Gulf Coast charm."
+        },
+        Alaska: {
+          capital: "Juneau",
+          region: "West",
+          population: "0.7M",
+          nickname: "The Last Frontier",
+          summary:
+            "Home to vast wilderness, the midnight sun, and Denali—North America's tallest peak."
+        },
+        Arizona: {
+          capital: "Phoenix",
+          region: "West",
+          population: "7.4M",
+          nickname: "Grand Canyon State",
+          summary:
+            "Where desert sunsets meet monumental canyons, vibrant tribal heritage, and modern cities."
+        },
+        Arkansas: {
+          capital: "Little Rock",
+          region: "South",
+          population: "3.0M",
+          nickname: "Natural State",
+          summary:
+            "Rolling Ozark hills, thermal springs, and river valleys define this outdoor playground."
+        },
+        California: {
+          capital: "Sacramento",
+          region: "West",
+          population: "39.0M",
+          nickname: "Golden State",
+          summary:
+            "Innovative tech hubs, cinematic coastlines, and national parks stretching from desert to sea."
+        },
+        Colorado: {
+          capital: "Denver",
+          region: "West",
+          population: "5.8M",
+          nickname: "Centennial State",
+          summary:
+            "Rocky Mountain peaks, alpine towns, and an adventurous spirit define the Mile High State."
+        },
+        Connecticut: {
+          capital: "Hartford",
+          region: "Northeast",
+          population: "3.6M",
+          nickname: "Constitution State",
+          summary:
+            "Coastal villages and historic campuses blend maritime heritage with modern finance."
+        },
+        Delaware: {
+          capital: "Dover",
+          region: "Northeast",
+          population: "1.0M",
+          nickname: "First State",
+          summary:
+            "The first to ratify the Constitution, Delaware mixes beaches, history, and business hubs."
+        },
+        Florida: {
+          capital: "Tallahassee",
+          region: "Southeast",
+          population: "22.0M",
+          nickname: "Sunshine State",
+          summary:
+            "Theme park thrills, Everglades adventures, and endless coastline under tropical skies."
+        },
+        Georgia: {
+          capital: "Atlanta",
+          region: "Southeast",
+          population: "11.0M",
+          nickname: "Peach State",
+          summary:
+            "A cultural crossroads with film studios, historic squares, and mountain-to-coast landscapes."
+        },
+        Hawaii: {
+          capital: "Honolulu",
+          region: "Pacific",
+          population: "1.4M",
+          nickname: "Aloha State",
+          summary:
+            "Volcanic islands rich in Polynesian culture, lush valleys, and world-renowned surf."
+        },
+        Idaho: {
+          capital: "Boise",
+          region: "West",
+          population: "1.9M",
+          nickname: "Gem State",
+          summary:
+            "Mountain lakes, fertile valleys, and fast-growing cities make Idaho a hidden gem."
+        },
+        Illinois: {
+          capital: "Springfield",
+          region: "Midwest",
+          population: "12.6M",
+          nickname: "Prairie State",
+          summary:
+            "Home to Chicago's skyline, Route 66 nostalgia, and the legacy of Abraham Lincoln."
+        },
+        Indiana: {
+          capital: "Indianapolis",
+          region: "Midwest",
+          population: "6.8M",
+          nickname: "Hoosier State",
+          summary:
+            "Speedway thrills, Hoosier hospitality, and lake country adventures define Indiana."
+        },
+        Iowa: {
+          capital: "Des Moines",
+          region: "Midwest",
+          population: "3.2M",
+          nickname: "Hawkeye State",
+          summary:
+            "Rolling prairies, scenic byways, and the first-in-the-nation presidential caucuses."
+        },
+        Kansas: {
+          capital: "Topeka",
+          region: "Midwest",
+          population: "2.9M",
+          nickname: "Sunflower State",
+          summary:
+            "Wide-open skies, aviation heritage, and a pioneering spirit anchor Kansas in the heartland."
+        },
+        Kentucky: {
+          capital: "Frankfort",
+          region: "South",
+          population: "4.5M",
+          nickname: "Bluegrass State",
+          summary:
+            "Thoroughbred racing, bourbon trails, and lush rolling bluegrass hills."
+        },
+        Louisiana: {
+          capital: "Baton Rouge",
+          region: "South",
+          population: "4.6M",
+          nickname: "Pelican State",
+          summary:
+            "Jazz rhythms, Creole cuisine, and bayou adventures meet Mardi Gras flair."
+        },
+        Maine: {
+          capital: "Augusta",
+          region: "Northeast",
+          population: "1.4M",
+          nickname: "Pine Tree State",
+          summary:
+            "Rocky coasts, lighthouses, and Acadia National Park define Maine's rugged beauty."
+        },
+        Maryland: {
+          capital: "Annapolis",
+          region: "Northeast",
+          population: "6.3M",
+          nickname: "Old Line State",
+          summary:
+            "Chesapeake Bay seafood, sailing tradition, and the nation's capital next door."
+        },
+        Massachusetts: {
+          capital: "Boston",
+          region: "Northeast",
+          population: "7.0M",
+          nickname: "Bay State",
+          summary:
+            "Revolutionary history, top-tier universities, and coastal charm from Cape Cod to the Berkshires."
+        },
+        Michigan: {
+          capital: "Lansing",
+          region: "Midwest",
+          population: "10.1M",
+          nickname: "Great Lakes State",
+          summary:
+            "Bound by freshwater seas, Michigan offers automotive innovation and year-round recreation."
+        },
+        Minnesota: {
+          capital: "Saint Paul",
+          region: "Midwest",
+          population: "5.7M",
+          nickname: "North Star State",
+          summary:
+            "10,000 lakes, northern lights, and thriving arts scenes define Minnesota's cool culture."
+        },
+        Mississippi: {
+          capital: "Jackson",
+          region: "South",
+          population: "3.0M",
+          nickname: "Magnolia State",
+          summary:
+            "Blues music roots, river delta cuisine, and warm Southern hospitality."
+        },
+        Missouri: {
+          capital: "Jefferson City",
+          region: "Midwest",
+          population: "6.2M",
+          nickname: "Show Me State",
+          summary:
+            "Gateway Arch views, Ozark adventures, and barbecue traditions from Kansas City to St. Louis."
+        },
+        Montana: {
+          capital: "Helena",
+          region: "West",
+          population: "1.1M",
+          nickname: "Treasure State",
+          summary:
+            "Big Sky Country boasts glacier peaks, prairie expanses, and starry nights."
+        },
+        Nebraska: {
+          capital: "Lincoln",
+          region: "Midwest",
+          population: "2.0M",
+          nickname: "Cornhusker State",
+          summary:
+            "Prairie horizons, pioneer history, and a thriving innovation corridor in Omaha-Lincoln."
+        },
+        Nevada: {
+          capital: "Carson City",
+          region: "West",
+          population: "3.2M",
+          nickname: "Silver State",
+          summary:
+            "From Las Vegas neon to high desert solitude, Nevada is a land of contrasts."
+        },
+        "New Hampshire": {
+          capital: "Concord",
+          region: "Northeast",
+          population: "1.4M",
+          nickname: "Granite State",
+          summary:
+            "White Mountain peaks, maple forests, and independent Yankee spirit."
+        },
+        "New Jersey": {
+          capital: "Trenton",
+          region: "Northeast",
+          population: "9.3M",
+          nickname: "Garden State",
+          summary:
+            "Boardwalk beaches, dynamic suburbs, and a hub for pharmaceuticals and dining."
+        },
+        "New Mexico": {
+          capital: "Santa Fe",
+          region: "Southwest",
+          population: "2.1M",
+          nickname: "Land of Enchantment",
+          summary:
+            "Adobe cities, desert art colonies, and sky-high balloon festivals."
+        },
+        "New York": {
+          capital: "Albany",
+          region: "Northeast",
+          population: "19.8M",
+          nickname: "Empire State",
+          summary:
+            "Global culture in New York City, Hudson Valley escapes, and roaring Niagara Falls."
+        },
+        "North Carolina": {
+          capital: "Raleigh",
+          region: "Southeast",
+          population: "10.8M",
+          nickname: "Tar Heel State",
+          summary:
+            "Research Triangle innovation meets Blue Ridge vistas and Outer Banks beaches."
+        },
+        "North Dakota": {
+          capital: "Bismarck",
+          region: "Midwest",
+          population: "0.8M",
+          nickname: "Peace Garden State",
+          summary:
+            "Great Plains horizons, Theodore Roosevelt legacy, and vibrant Native cultures."
+        },
+        Ohio: {
+          capital: "Columbus",
+          region: "Midwest",
+          population: "11.8M",
+          nickname: "Buckeye State",
+          summary:
+            "Aerospace heritage, sports dynasties, and Lake Erie getaways."
+        },
+        Oklahoma: {
+          capital: "Oklahoma City",
+          region: "South",
+          population: "4.0M",
+          nickname: "Sooner State",
+          summary:
+            "Route 66 nostalgia, prairies, and one of the nation's largest Native American populations."
+        },
+        Oregon: {
+          capital: "Salem",
+          region: "West",
+          population: "4.3M",
+          nickname: "Beaver State",
+          summary:
+            "Coastal cliffs, Columbia Gorge waterfalls, and eco-conscious urban life."
+        },
+        Pennsylvania: {
+          capital: "Harrisburg",
+          region: "Northeast",
+          population: "12.9M",
+          nickname: "Keystone State",
+          summary:
+            "From Liberty Bell history to Appalachian trails and Amish country charm."
+        },
+        "Rhode Island": {
+          capital: "Providence",
+          region: "Northeast",
+          population: "1.1M",
+          nickname: "Ocean State",
+          summary:
+            "New England's smallest state brims with sailing, seafood, and artistic coastal towns."
+        },
+        "South Carolina": {
+          capital: "Columbia",
+          region: "Southeast",
+          population: "5.4M",
+          nickname: "Palmetto State",
+          summary:
+            "Lowcountry cuisine, historic cities, and golden beaches draw year-round visitors."
+        },
+        "South Dakota": {
+          capital: "Pierre",
+          region: "Midwest",
+          population: "0.9M",
+          nickname: "Mount Rushmore State",
+          summary:
+            "Badlands vistas, Black Hills granite, and iconic presidential sculptures."
+        },
+        Tennessee: {
+          capital: "Nashville",
+          region: "South",
+          population: "7.1M",
+          nickname: "Volunteer State",
+          summary:
+            "Music City beats, Smoky Mountain trails, and Memphis blues."
+        },
+        Texas: {
+          capital: "Austin",
+          region: "South",
+          population: "30.0M",
+          nickname: "Lone Star State",
+          summary:
+            "Big skies, bold flavors, and booming innovation from the Hill Country to Space City."
+        },
+        Utah: {
+          capital: "Salt Lake City",
+          region: "West",
+          population: "3.4M",
+          nickname: "Beehive State",
+          summary:
+            "Red rock arches, alpine powder, and a thriving outdoors culture."
+        },
+        Vermont: {
+          capital: "Montpelier",
+          region: "Northeast",
+          population: "0.6M",
+          nickname: "Green Mountain State",
+          summary:
+            "Covered bridges, craft farms, and blazing autumn foliage."
+        },
+        Virginia: {
+          capital: "Richmond",
+          region: "South",
+          population: "8.7M",
+          nickname: "Old Dominion",
+          summary:
+            "Historic Williamsburg, Blue Ridge Parkway drives, and a strong tech corridor."
+        },
+        Washington: {
+          capital: "Olympia",
+          region: "West",
+          population: "7.9M",
+          nickname: "Evergreen State",
+          summary:
+            "Snow-capped volcanoes, coastal rainforests, and innovative cities like Seattle."
+        },
+        "West Virginia": {
+          capital: "Charleston",
+          region: "South",
+          population: "1.8M",
+          nickname: "Mountain State",
+          summary:
+            "Appalachian peaks, whitewater rapids, and scenic mountain towns."
+        },
+        Wisconsin: {
+          capital: "Madison",
+          region: "Midwest",
+          population: "5.9M",
+          nickname: "Badger State",
+          summary:
+            "Lake country living, dairy delights, and vibrant college towns."
+        },
+        Wyoming: {
+          capital: "Cheyenne",
+          region: "West",
+          population: "0.6M",
+          nickname: "Equality State",
+          summary:
+            "Home to Yellowstone wonders, rodeo traditions, and wide-open horizons."
+        }
+      };
+
+      const svg = d3.select("#globe");
+      const tooltip = d3.select("#tooltip");
+      const globeCard = document.querySelector(".globe-card");
+
+      const projection = d3
+        .geoOrthographic()
+        .scale(300)
+        .translate([0, 0])
+        .rotate([100, -40])
+        .precision(0.5);
+
+      const path = d3.geoPath(projection);
+
+      const g = svg.append("g");
+      const water = g.append("path").attr("fill", "#e4edff").attr("stroke", "none");
+      const graticule = d3.geoGraticule10();
+      const graticulePath = g
+        .append("path")
+        .attr("fill", "none")
+        .attr("stroke", "rgba(37, 99, 235, 0.18)")
+        .attr("stroke-width", 0.5);
+
+      const statesGroup = g.append("g");
+      const boundaries = g
+        .append("path")
+        .attr("fill", "none")
+        .attr("stroke", "rgba(15, 23, 42, 0.3)")
+        .attr("stroke-width", 0.8);
+
+      let statesFeatures = [];
+      let autoRotate = true;
+      let rotationTimer;
+
+      function resize() {
+        const rect = globeCard.getBoundingClientRect();
+        const size = Math.min(rect.width, rect.height);
+
+        svg
+          .attr("width", rect.width)
+          .attr("height", rect.height)
+          .attr("viewBox", `0 0 ${rect.width} ${rect.height}`);
+        g.attr("transform", `translate(${rect.width / 2}, ${rect.height / 2})`);
+
+        projection.scale((size / 2) * 0.92);
+
+        redraw();
+      }
+
+      function redraw() {
+        water.attr("d", path({ type: "Sphere" }));
+        graticulePath.attr("d", path(graticule));
+
+        if (statesFeatures.length) {
+          statesGroup
+            .selectAll("path")
+            .attr("d", path);
+
+          boundaries.attr(
+            "d",
+            path(
+              topojson.mesh(
+                { type: "FeatureCollection", features: statesFeatures },
+                (a, b) => a !== b
+              )
+            )
+          );
+        }
+      }
+
+      function updateSidebar(name) {
+        const title = document.getElementById("state-name");
+        const capital = document.getElementById("state-capital");
+        const region = document.getElementById("state-region");
+        const summary = document.getElementById("state-summary");
+        const population = document.getElementById("state-pop");
+        const nickname = document.getElementById("state-nickname");
+
+        const data = stateDetails[name];
+
+        if (data) {
+          title.textContent = name;
+          capital.textContent = `Capital — ${data.capital}`;
+          region.textContent = `Region — ${data.region}`;
+          summary.textContent = data.summary;
+          population.textContent = data.population;
+          nickname.textContent = data.nickname;
+        } else {
+          title.textContent = name;
+          capital.textContent = "Capital — Not available";
+          region.textContent = "Region — United States";
+          summary.textContent =
+            "Detailed information for this location is on the way. Try another state!";
+          population.textContent = "—";
+          nickname.textContent = "—";
+        }
+      }
+
+      function rotateTo(feature) {
+        const centroid = d3.geoCentroid(feature);
+        const currentRotate = projection.rotate();
+        const targetRotate = [-centroid[0], -centroid[1]];
+
+        d3.transition()
+          .duration(1200)
+          .tween("rotate", () => {
+            const interpolate = d3.interpolate(currentRotate, targetRotate);
+            return (t) => {
+              projection.rotate(interpolate(t));
+              redraw();
+            };
+          });
+      }
+
+      function stopAutoRotation() {
+        if (autoRotate) {
+          autoRotate = false;
+          if (rotationTimer) {
+            rotationTimer.stop();
+          }
+        }
+      }
+
+      function attachInteractions(selection) {
+        selection
+          .on("pointerenter", function (event, d) {
+            stopAutoRotation();
+            d3.select(this)
+              .raise()
+              .transition()
+              .duration(200)
+              .attr("fill", "rgba(37, 99, 235, 0.45)");
+
+            tooltip
+              .style("opacity", 1)
+              .style("transform", "translate(-50%, -140%)")
+              .text(d.properties.name);
+          })
+          .on("pointermove", function (event) {
+            const rect = globeCard.getBoundingClientRect();
+            tooltip
+              .style("left", `${event.clientX - rect.left}px`)
+              .style("top", `${event.clientY - rect.top}px`);
+          })
+          .on("pointerleave", function () {
+            d3.select(this)
+              .transition()
+              .duration(200)
+              .attr("fill", "rgba(37, 99, 235, 0.25)");
+
+            tooltip.style("opacity", 0);
+          })
+          .on("pointerdown", function (event, d) {
+            event.preventDefault();
+            stopAutoRotation();
+            rotateTo(d);
+            updateSidebar(d.properties.name);
+          });
+      }
+
+      function enableAutoRotation() {
+        rotationTimer = d3.timer((elapsed) => {
+          const rotate = projection.rotate();
+          projection.rotate([rotate[0] + 0.02, rotate[1], rotate[2]]);
+          redraw();
+
+          if (elapsed > 18000) {
+            rotationTimer.stop();
+            autoRotate = false;
+          }
+        });
+      }
+
+      Promise.all([
+        d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json"),
+        new Promise((resolve) => setTimeout(resolve, 300))
+      ]).then(([us]) => {
+        const states = topojson.feature(us, us.objects.states);
+        statesFeatures = states.features;
+
+        const statePaths = statesGroup
+          .selectAll("path")
+          .data(statesFeatures)
+          .enter()
+          .append("path")
+          .attr("fill", "rgba(37, 99, 235, 0.25)")
+          .attr("stroke", "rgba(15, 23, 42, 0.24)")
+          .attr("stroke-width", 0.8)
+          .attr("cursor", "pointer");
+
+        attachInteractions(statePaths);
+        resize();
+        window.addEventListener("resize", resize);
+        enableAutoRotation();
+      });
+
+      redraw();
+    </script>
+  </body>
+</html>
