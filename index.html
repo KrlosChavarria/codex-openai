@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Interactive USA Globe</title>
+    <title>USA States Globe Widget</title>
     <link
       rel="preconnect"
       href="https://fonts.googleapis.com"
@@ -14,21 +14,20 @@
       crossorigin
     />
     <link
-      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
     <style>
       :root {
-        color-scheme: light dark;
-        --bg: linear-gradient(160deg, #f7f9fc 0%, #e5efff 50%, #f8f9ff 100%);
-        --text-primary: #111827;
-        --text-secondary: #4b5563;
-        --accent: #2563eb;
-        --accent-light: rgba(37, 99, 235, 0.18);
-        --card: rgba(255, 255, 255, 0.8);
-        --border: rgba(15, 23, 42, 0.08);
-        font-family: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont,
-          "Segoe UI", sans-serif;
+        --bg: radial-gradient(circle at 20% 20%, #101522 0%, #04050a 100%);
+        --text-primary: #f8fafc;
+        --text-secondary: #cbd5f5;
+        --panel-bg: rgba(7, 12, 24, 0.7);
+        --panel-border: rgba(148, 163, 184, 0.2);
+        --accent: #7dd3fc;
+        --globe-base: #0ea5e9;
+        --globe-highlight: #fbbf24;
+        --pin-color: #f472b6;
       }
 
       * {
@@ -38,311 +37,398 @@
       body {
         margin: 0;
         min-height: 100vh;
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
         background: var(--bg);
         color: var(--text-primary);
         display: flex;
-        justify-content: center;
-        padding: clamp(1rem, 3vw, 2rem);
-      }
-
-      .app-shell {
-        width: min(1200px, 100%);
-        background: var(--card);
-        border-radius: 28px;
-        box-shadow: 0 20px 60px rgba(15, 23, 42, 0.08);
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        border: 1px solid var(--border);
-        backdrop-filter: blur(12px);
-      }
-
-      header {
-        padding: clamp(1.2rem, 2.8vw, 2rem) clamp(1.4rem, 3vw, 2.4rem);
-        border-bottom: 1px solid var(--border);
-        display: flex;
-        justify-content: space-between;
         align-items: center;
-        gap: 1rem;
-        background: rgba(255, 255, 255, 0.65);
+        justify-content: center;
+        padding: clamp(1.2rem, 2.5vw, 2.4rem);
       }
 
-      header h1 {
-        margin: 0;
-        font-size: clamp(1.4rem, 2.4vw, 2rem);
-        letter-spacing: -0.01em;
+      .layout {
+        width: min(1240px, 100%);
+        display: grid;
+        grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr);
+        gap: clamp(1.2rem, 3vw, 2.6rem);
+        background: rgba(4, 7, 16, 0.55);
+        border-radius: 28px;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        backdrop-filter: blur(24px);
+        padding: clamp(1.4rem, 3vw, 2.6rem);
+        box-shadow: 0 40px 80px rgba(8, 13, 28, 0.55);
       }
 
-      header span {
-        font-weight: 600;
-        color: var(--accent);
-        text-transform: uppercase;
-        font-size: clamp(0.7rem, 1vw, 0.85rem);
-        letter-spacing: 0.18em;
-      }
-
-      .header-badge {
-        background: rgba(37, 99, 235, 0.12);
-        color: var(--accent);
-        padding: 0.55rem 1rem;
-        border-radius: 999px;
-        font-weight: 600;
-        font-size: 0.85rem;
-        letter-spacing: 0.05em;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8),
-          0 10px 24px rgba(37, 99, 235, 0.18);
-        white-space: nowrap;
-      }
-
-      .content {
-        display: flex;
-        gap: clamp(1.5rem, 3vw, 3rem);
-        padding: clamp(1.4rem, 3vw, 2.4rem);
-        position: relative;
-      }
-
-      .globe-card {
-        flex: 1;
+      .scene-wrapper {
         position: relative;
         aspect-ratio: 1;
-        min-height: 360px;
-        background: rgba(255, 255, 255, 0.75);
-        border-radius: 24px;
-        border: 1px solid var(--border);
+        width: 100%;
+        border-radius: 26px;
+        overflow: hidden;
+        background: rgba(2, 6, 14, 0.75);
+        border: 1px solid rgba(148, 163, 184, 0.14);
         display: flex;
         align-items: center;
         justify-content: center;
-        overflow: hidden;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8),
-          0 20px 40px rgba(37, 99, 235, 0.12);
       }
 
-      svg {
-        width: 100%;
-        height: 100%;
-        touch-action: none;
+      canvas {
+        width: 100% !important;
+        height: 100% !important;
+        display: block;
       }
 
-      .sidebar {
-        flex-basis: min(320px, 100%);
-        background: rgba(255, 255, 255, 0.72);
-        border-radius: 24px;
-        border: 1px solid var(--border);
-        padding: clamp(1.4rem, 3vw, 2.2rem);
-        display: flex;
-        flex-direction: column;
-        gap: 1.1rem;
-        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85),
-          0 16px 32px rgba(15, 23, 42, 0.06);
-      }
-
-      .sidebar h2 {
-        margin: 0;
-        font-size: clamp(1.5rem, 2.2vw, 2rem);
-      }
-
-      .sidebar .meta {
-        display: flex;
-        gap: 1.2rem;
-        flex-wrap: wrap;
-      }
-
-      .meta .pill {
-        background: var(--accent-light);
-        color: var(--accent);
-        padding: 0.45rem 0.8rem;
-        border-radius: 999px;
-        font-weight: 600;
-        font-size: 0.9rem;
-      }
-
-      .sidebar .summary {
-        margin: 0;
-        line-height: 1.6;
-        color: var(--text-secondary);
-      }
-
-      .stats {
+      .scene-overlay {
+        position: absolute;
+        top: 8%;
+        left: 12%;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-        gap: 0.8rem;
-      }
-
-      .stat-card {
-        background: rgba(255, 255, 255, 0.9);
-        border-radius: 18px;
-        padding: 0.9rem 1.1rem;
-        border: 1px solid rgba(37, 99, 235, 0.16);
-        display: flex;
-        flex-direction: column;
-        gap: 0.4rem;
-      }
-
-      .stat-label {
-        font-size: 0.75rem;
+        gap: 1rem;
         text-transform: uppercase;
-        color: var(--accent);
-        letter-spacing: 0.16em;
+        pointer-events: none;
+      }
+
+      .overlay-card {
+        background: rgba(7, 11, 24, 0.6);
+        padding: 0.75rem 1.2rem;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        font-size: 0.78rem;
+        letter-spacing: 0.18em;
         font-weight: 600;
-      }
-
-      .stat-value {
-        font-size: 1.2rem;
-        font-weight: 700;
-      }
-
-      .legend {
-        display: flex;
-        gap: 0.75rem;
-        align-items: center;
-        flex-wrap: wrap;
-        margin-top: auto;
-        padding-top: 0.5rem;
-        border-top: 1px solid rgba(148, 163, 184, 0.2);
         color: var(--text-secondary);
-        font-size: 0.85rem;
-      }
-
-      .legend span {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-      }
-
-      .legend span::before {
-        content: "";
-        display: inline-block;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-      }
-
-      .legend span:nth-child(1)::before {
-        background: rgba(37, 99, 235, 0.25);
-        border: 1px solid rgba(37, 99, 235, 0.5);
-      }
-
-      .legend span:nth-child(2)::before {
-        background: rgba(15, 23, 42, 0.12);
-        border: 1px solid rgba(15, 23, 42, 0.32);
+        white-space: nowrap;
       }
 
       .tooltip {
         position: absolute;
-        pointer-events: none;
-        background: #0f172a;
-        color: white;
-        padding: 0.45rem 0.75rem;
+        padding: 0.55rem 0.85rem;
+        background: rgba(15, 23, 42, 0.92);
+        color: #f8fafc;
         border-radius: 10px;
-        font-size: 0.85rem;
-        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.35);
+        font-size: 0.82rem;
+        pointer-events: none;
+        transform: translate(-50%, -140%);
         opacity: 0;
-        transform: translate(-50%, -120%);
-        transition: opacity 180ms ease, transform 220ms ease;
+        transition: opacity 140ms ease;
         white-space: nowrap;
-        z-index: 10;
+        z-index: 5;
       }
 
-      .globe-label {
-        position: absolute;
-        top: 1.2rem;
-        left: 1.4rem;
-        padding: 0.4rem 0.8rem;
-        background: rgba(15, 23, 42, 0.75);
-        color: white;
-        border-radius: 999px;
+      .info-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 1.4rem;
+        background: var(--panel-bg);
+        border-radius: 24px;
+        padding: clamp(1rem, 2vw, 1.8rem);
+        border: 1px solid var(--panel-border);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      }
+
+      .info-panel header h1 {
+        margin: 0;
+        font-size: clamp(1.1rem, 2vw, 1.6rem);
+        letter-spacing: -0.01em;
+      }
+
+      .info-panel header span {
         text-transform: uppercase;
-        font-size: 0.75rem;
+        font-size: 0.72rem;
+        letter-spacing: 0.22em;
+        color: var(--text-secondary);
+      }
+
+      .state-meta {
+        display: grid;
+        gap: 0.6rem;
+      }
+
+      .state-meta h2 {
+        margin: 0;
+        font-size: clamp(1.4rem, 2.4vw, 2rem);
+      }
+
+      .meta-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.6rem;
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+      }
+
+      .meta-row span {
+        background: rgba(12, 20, 35, 0.7);
+        padding: 0.35rem 0.7rem;
+        border-radius: 999px;
+        border: 1px solid rgba(148, 163, 184, 0.18);
+      }
+
+      .state-summary {
+        margin: 0;
+        line-height: 1.6;
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+      }
+
+      .stat-card {
+        background: rgba(12, 21, 36, 0.65);
+        border-radius: 18px;
+        padding: 0.9rem 1rem;
+        border: 1px solid rgba(148, 163, 184, 0.16);
+        display: grid;
+        gap: 0.35rem;
+      }
+
+      .stat-label {
+        font-size: 0.7rem;
         letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+      }
+
+      .stat-value {
+        font-size: 1.1rem;
         font-weight: 600;
-        box-shadow: 0 8px 16px rgba(15, 23, 42, 0.25);
       }
 
-      @media (max-width: 960px) {
-        .content {
-          flex-direction: column;
+      .control-panel {
+        border-top: 1px solid rgba(148, 163, 184, 0.16);
+        padding-top: 1.1rem;
+        display: grid;
+        gap: 0.9rem;
+      }
+
+      .control-panel h3 {
+        margin: 0;
+        font-size: 0.95rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+      }
+
+      .control-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+      }
+
+      .control-item input[type="color"] {
+        appearance: none;
+        border: none;
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        padding: 0;
+        background: none;
+        box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.3);
+        cursor: pointer;
+      }
+
+      button {
+        border: none;
+        border-radius: 999px;
+        padding: 0.9rem 1.2rem;
+        font-weight: 600;
+        font-size: 0.92rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        cursor: pointer;
+        background: linear-gradient(120deg, rgba(125, 211, 252, 0.9), rgba(59, 130, 246, 0.8));
+        color: #031023;
+        transition: transform 160ms ease, box-shadow 160ms ease;
+      }
+
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px rgba(14, 165, 233, 0.35);
+      }
+
+      .export-modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(3, 5, 12, 0.7);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        visibility: hidden;
+        opacity: 0;
+        transition: opacity 180ms ease;
+        z-index: 20;
+      }
+
+      .export-modal.active {
+        visibility: visible;
+        opacity: 1;
+      }
+
+      .export-content {
+        width: min(720px, 100%);
+        background: rgba(10, 16, 32, 0.95);
+        border-radius: 22px;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        padding: 1.6rem;
+        display: grid;
+        gap: 1rem;
+      }
+
+      .export-content header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .export-content header h2 {
+        margin: 0;
+        font-size: 1.2rem;
+      }
+
+      .export-content textarea {
+        width: 100%;
+        min-height: 280px;
+        border-radius: 16px;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        background: rgba(2, 6, 14, 0.8);
+        color: #e2e8f0;
+        padding: 1rem;
+        font-family: "JetBrains Mono", "Fira Code", monospace;
+        font-size: 0.82rem;
+        line-height: 1.5;
+        resize: vertical;
+      }
+
+      .close-btn {
+        background: none;
+        color: var(--text-secondary);
+        padding: 0.4rem 0.6rem;
+        border-radius: 10px;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        letter-spacing: normal;
+        text-transform: none;
+      }
+
+      .close-btn:hover {
+        box-shadow: none;
+        transform: none;
+        color: #f1f5f9;
+      }
+
+      @media (max-width: 1080px) {
+        .layout {
+          grid-template-columns: 1fr;
         }
 
-        .globe-card {
-          min-height: 320px;
-        }
-
-        .sidebar {
-          flex-basis: auto;
+        .scene-wrapper {
+          aspect-ratio: auto;
+          min-height: 420px;
         }
       }
 
-      @media (max-width: 600px) {
+      @media (max-width: 640px) {
         body {
           padding: 1rem;
         }
 
-        .app-shell {
+        .layout {
+          padding: 1rem;
           border-radius: 20px;
         }
 
-        header {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 0.4rem;
+        .stats-grid {
+          grid-template-columns: 1fr;
         }
 
-        header span {
-          font-size: 0.7rem;
-        }
-
-        .legend {
-          font-size: 0.8rem;
+        button {
+          width: 100%;
         }
       }
     </style>
   </head>
   <body>
-    <div class="app-shell">
-      <header>
-        <div>
-          <span>United States Atlas</span>
-          <h1>Explore States on an Interactive Globe</h1>
+    <div class="layout">
+      <section class="scene-wrapper">
+        <canvas id="globe-canvas"></canvas>
+        <div class="scene-overlay">
+          <div class="overlay-card">United States Atlas</div>
+          <div class="overlay-card">Interactive • Draggable • 3D</div>
+          <div class="overlay-card">Hover pins to preview states</div>
         </div>
-        <div class="header-badge">Tap a state to learn more</div>
-      </header>
-      <main class="content">
-        <div class="globe-card">
-          <div class="globe-label">USA</div>
-          <svg id="globe"></svg>
-          <div class="tooltip" id="tooltip"></div>
-        </div>
-        <aside class="sidebar">
+        <div class="tooltip" id="tooltip"></div>
+      </section>
+      <aside class="info-panel">
+        <header>
+          <span>Exploration Dashboard</span>
+          <h1>Select any state from the glowing globe</h1>
+        </header>
+        <div class="state-meta">
           <h2 id="state-name">United States of America</h2>
-          <div class="meta">
-            <div class="pill" id="state-capital">Capital — Washington, D.C.</div>
-            <div class="pill" id="state-region">Region — North America</div>
+          <div class="meta-row">
+            <span id="state-capital">Capital — Washington, D.C.</span>
+            <span id="state-region">Region — Nationwide</span>
           </div>
-          <p class="summary" id="state-summary">
-            Rotate the globe and select any state to reveal quick facts, population
-            insights, and a highlight that captures what makes each place unique.
+          <p class="state-summary" id="state-summary">
+            Drag to reposition the sphere, hover the neon markers to preview a state, and click the globe anywhere to focus. Customize the palette and export a ready-to-use widget in seconds.
           </p>
-          <div class="stats">
-            <div class="stat-card">
-              <span class="stat-label">Population</span>
-              <span class="stat-value" id="state-pop">331M</span>
-            </div>
-            <div class="stat-card">
-              <span class="stat-label">Nickname</span>
-              <span class="stat-value" id="state-nickname">The United States</span>
-            </div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <span class="stat-label">Population</span>
+            <span class="stat-value" id="state-pop">331M</span>
           </div>
-          <div class="legend">
-            <span>Tap or click to focus</span>
-            <span>Hover to preview</span>
+          <div class="stat-card">
+            <span class="stat-label">Nickname</span>
+            <span class="stat-value" id="state-nickname">The United States</span>
           </div>
-        </aside>
-      </main>
+        </div>
+        <div class="control-panel">
+          <h3>Personalize the experience</h3>
+          <label class="control-item">
+            <span>Backdrop</span>
+            <input type="color" id="background-picker" value="#050714" />
+          </label>
+          <label class="control-item">
+            <span>Globe glow</span>
+            <input type="color" id="globe-picker" value="#0ea5e9" />
+          </label>
+          <label class="control-item">
+            <span>Highlight</span>
+            <input type="color" id="highlight-picker" value="#fbbf24" />
+          </label>
+          <label class="control-item">
+            <span>Pin accent</span>
+            <input type="color" id="pin-picker" value="#f472b6" />
+          </label>
+          <button id="export-btn">Export widget code</button>
+        </div>
+      </aside>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
-    <script>
+    <div class="export-modal" id="export-modal">
+      <div class="export-content">
+        <header>
+          <h2>Copy &amp; paste into your project</h2>
+          <button class="close-btn" id="close-export">Close</button>
+        </header>
+        <textarea id="export-text" readonly></textarea>
+      </div>
+    </div>
+
+    <script type="module">
+      import * as THREE from "https://cdn.jsdelivr.net/npm/three@0.159/build/three.module.js";
+      import { OrbitControls } from "https://cdn.jsdelivr.net/npm/three@0.159/examples/jsm/controls/OrbitControls.js";
+      import * as d3 from "https://cdn.jsdelivr.net/npm/d3@7/+esm";
+      import * as topojson from "https://cdn.jsdelivr.net/npm/topojson-client@3/+esm";
+
       const stateDetails = {
         Alabama: {
           capital: "Montgomery",
@@ -443,10 +529,10 @@
         Illinois: {
           capital: "Springfield",
           region: "Midwest",
-          population: "12.6M",
+          population: "12.8M",
           nickname: "Prairie State",
           summary:
-            "Home to Chicago's skyline, Route 66 nostalgia, and the legacy of Abraham Lincoln."
+            "Skyline views in Chicago, fertile farmland, and a storied political legacy."
         },
         Indiana: {
           capital: "Indianapolis",
@@ -454,7 +540,7 @@
           population: "6.8M",
           nickname: "Hoosier State",
           summary:
-            "Speedway thrills, Hoosier hospitality, and lake country adventures define Indiana."
+            "Indy 500 thrills, covered bridges, and a welcoming heartland spirit."
         },
         Iowa: {
           capital: "Des Moines",
@@ -462,7 +548,7 @@
           population: "3.2M",
           nickname: "Hawkeye State",
           summary:
-            "Rolling prairies, scenic byways, and the first-in-the-nation presidential caucuses."
+            "Rolling prairies, tech-forward cities, and celebrated caucus traditions."
         },
         Kansas: {
           capital: "Topeka",
@@ -470,7 +556,7 @@
           population: "2.9M",
           nickname: "Sunflower State",
           summary:
-            "Wide-open skies, aviation heritage, and a pioneering spirit anchor Kansas in the heartland."
+            "Open skies, prairie trails, and aviation heritage stretching back to Amelia Earhart."
         },
         Kentucky: {
           capital: "Frankfort",
@@ -478,7 +564,7 @@
           population: "4.5M",
           nickname: "Bluegrass State",
           summary:
-            "Thoroughbred racing, bourbon trails, and lush rolling bluegrass hills."
+            "Horse racing legends, bourbon country, and Appalachian artistry."
         },
         Louisiana: {
           capital: "Baton Rouge",
@@ -486,7 +572,7 @@
           population: "4.6M",
           nickname: "Pelican State",
           summary:
-            "Jazz rhythms, Creole cuisine, and bayou adventures meet Mardi Gras flair."
+            "Jazz rhythms, bayou adventures, and Creole flavors define the Pelican State."
         },
         Maine: {
           capital: "Augusta",
@@ -494,23 +580,23 @@
           population: "1.4M",
           nickname: "Pine Tree State",
           summary:
-            "Rocky coasts, lighthouses, and Acadia National Park define Maine's rugged beauty."
+            "Rocky coasts, lobster shacks, and evergreen forests meet maritime heritage."
         },
         Maryland: {
           capital: "Annapolis",
           region: "Northeast",
-          population: "6.3M",
+          population: "6.2M",
           nickname: "Old Line State",
           summary:
-            "Chesapeake Bay seafood, sailing tradition, and the nation's capital next door."
+            "Chesapeake Bay sailing, historic harbors, and a thriving biotech scene."
         },
         Massachusetts: {
           capital: "Boston",
           region: "Northeast",
-          population: "7.0M",
+          population: "6.9M",
           nickname: "Bay State",
           summary:
-            "Revolutionary history, top-tier universities, and coastal charm from Cape Cod to the Berkshires."
+            "Innovation labs, colonial cobblestones, and Atlantic island escapes."
         },
         Michigan: {
           capital: "Lansing",
@@ -746,202 +832,603 @@
         }
       };
 
-      const svg = d3.select("#globe");
-      const tooltip = d3.select("#tooltip");
-      const globeCard = document.querySelector(".globe-card");
+      const canvas = document.getElementById("globe-canvas");
+      const tooltip = document.getElementById("tooltip");
+      const backgroundPicker = document.getElementById("background-picker");
+      const globePicker = document.getElementById("globe-picker");
+      const highlightPicker = document.getElementById("highlight-picker");
+      const pinPicker = document.getElementById("pin-picker");
+      const exportBtn = document.getElementById("export-btn");
+      const exportModal = document.getElementById("export-modal");
+      const closeExportBtn = document.getElementById("close-export");
+      const exportText = document.getElementById("export-text");
 
-      const projection = d3
-        .geoOrthographic()
-        .scale(300)
-        .translate([0, 0])
-        .rotate([100, -40])
-        .precision(0.5);
+      const stateName = document.getElementById("state-name");
+      const stateCapital = document.getElementById("state-capital");
+      const stateRegion = document.getElementById("state-region");
+      const stateSummary = document.getElementById("state-summary");
+      const statePop = document.getElementById("state-pop");
+      const stateNickname = document.getElementById("state-nickname");
 
-      const path = d3.geoPath(projection);
+      const scene = new THREE.Scene();
+      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-      const g = svg.append("g");
-      const water = g.append("path").attr("fill", "#e4edff").attr("stroke", "none");
-      const graticule = d3.geoGraticule10();
-      const graticulePath = g
-        .append("path")
-        .attr("fill", "none")
-        .attr("stroke", "rgba(37, 99, 235, 0.18)")
-        .attr("stroke-width", 0.5);
+      const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+      camera.position.set(0, 0, 4);
 
-      const statesGroup = g.append("g");
-      const boundaries = g
-        .append("path")
-        .attr("fill", "none")
-        .attr("stroke", "rgba(15, 23, 42, 0.3)")
-        .attr("stroke-width", 0.8);
+      const globeGroup = new THREE.Group();
+      scene.add(globeGroup);
+
+      const ambient = new THREE.AmbientLight(0x88aaff, 0.6);
+      scene.add(ambient);
+
+      const directional = new THREE.DirectionalLight(0xffffff, 1.2);
+      directional.position.set(5, 3, 5);
+      scene.add(directional);
+
+      const globeMaterial = new THREE.MeshStandardMaterial({
+        color: new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue("--globe-base").trim() || "#0ea5e9"),
+        metalness: 0.25,
+        roughness: 0.4,
+        transparent: true,
+        opacity: 0.9,
+        emissive: new THREE.Color("#0e7490"),
+        emissiveIntensity: 0.25
+      });
+
+      const globeGeometry = new THREE.SphereGeometry(1.2, 128, 128);
+      const globeMesh = new THREE.Mesh(globeGeometry, globeMaterial);
+      globeGroup.add(globeMesh);
+
+      const wireMaterial = new THREE.LineBasicMaterial({ color: 0x1f6feb, opacity: 0.35, transparent: true });
+      const wire = new THREE.LineSegments(new THREE.WireframeGeometry(new THREE.SphereGeometry(1.205, 32, 32)), wireMaterial);
+      globeGroup.add(wire);
+
+      const starsGeometry = new THREE.BufferGeometry();
+      const starCount = 600;
+      const positions = new Float32Array(starCount * 3);
+      for (let i = 0; i < starCount; i++) {
+        const radius = 20 + Math.random() * 40;
+        const theta = Math.random() * 2 * Math.PI;
+        const phi = Math.acos(2 * Math.random() - 1);
+        positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+        positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+        positions[i * 3 + 2] = radius * Math.cos(phi);
+      }
+      starsGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+      const starsMaterial = new THREE.PointsMaterial({ color: 0x64748b, size: 0.6, sizeAttenuation: true, transparent: true, opacity: 0.6 });
+      const stars = new THREE.Points(starsGeometry, starsMaterial);
+      scene.add(stars);
+
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true;
+      controls.enablePan = false;
+      controls.minDistance = 2.5;
+      controls.maxDistance = 6;
+      controls.autoRotate = true;
+      controls.autoRotateSpeed = 0.6;
+
+      const raycaster = new THREE.Raycaster();
+      const pointer = new THREE.Vector2();
+      const tempV = new THREE.Vector3();
 
       let statesFeatures = [];
-      let autoRotate = true;
-      let rotationTimer;
+      const stateGroups = new Map();
+      const pinObjects = [];
+      let highlightedState = null;
+      let hoveredPin = null;
+      let activeState = null;
 
-      function resize() {
-        const rect = globeCard.getBoundingClientRect();
-        const size = Math.min(rect.width, rect.height);
+      const highlightMaterial = new THREE.LineBasicMaterial({
+        color: new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue("--globe-highlight").trim() || "#fbbf24"),
+        linewidth: 2,
+        transparent: true,
+        opacity: 0.9
+      });
 
-        svg
-          .attr("width", rect.width)
-          .attr("height", rect.height)
-          .attr("viewBox", `0 0 ${rect.width} ${rect.height}`);
-        g.attr("transform", `translate(${rect.width / 2}, ${rect.height / 2})`);
+      const baseStateMaterial = new THREE.LineBasicMaterial({ color: 0x1f2937, transparent: true, opacity: 0.35 });
 
-        projection.scale((size / 2) * 0.92);
-
-        redraw();
+      function latLongToVector3(lat, lon, radius = 1.205) {
+        const phi = (90 - lat) * (Math.PI / 180);
+        const theta = (lon + 180) * (Math.PI / 180);
+        const x = -radius * Math.sin(phi) * Math.cos(theta);
+        const z = radius * Math.sin(phi) * Math.sin(theta);
+        const y = radius * Math.cos(phi);
+        return new THREE.Vector3(x, y, z);
       }
 
-      function redraw() {
-        water.attr("d", path({ type: "Sphere" }));
-        graticulePath.attr("d", path(graticule));
+      function vector3ToLatLon(vector) {
+        const v = vector.clone().normalize();
+        const lat = 90 - (Math.acos(v.y) * 180) / Math.PI;
+        const lon = ((Math.atan2(v.z, -v.x) * 180) / Math.PI) - 180;
+        return [lon, lat];
+      }
 
-        if (statesFeatures.length) {
-          statesGroup
-            .selectAll("path")
-            .attr("d", path);
+      function createStateLines(feature) {
+        const group = new THREE.Group();
+        const coordinates = feature.geometry.coordinates;
+        const multi = feature.geometry.type === "MultiPolygon" ? coordinates : [coordinates];
+        multi.forEach((polygon) => {
+          polygon.forEach((ring) => {
+            const points = ring.map(([lon, lat]) => latLongToVector3(lat, lon));
+            const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            const line = new THREE.LineLoop(geometry, baseStateMaterial.clone());
+            group.add(line);
+          });
+        });
+        group.userData.feature = feature;
+        return group;
+      }
 
-          boundaries.attr(
-            "d",
-            path(
-              topojson.mesh(
-                { type: "FeatureCollection", features: statesFeatures },
-                (a, b) => a !== b
-              )
-            )
-          );
+      function createStatePin(feature) {
+        const centroid = d3.geoCentroid(feature);
+        const [lon, lat] = centroid;
+        const normal = latLongToVector3(lat, lon, 1).normalize();
+        const headPosition = normal.clone().multiplyScalar(1.26);
+        const stemHeight = 0.16;
+        const stemCenter = normal.clone().multiplyScalar(1.2 + stemHeight / 2);
+        const pinGroup = new THREE.Group();
+
+        const stemGeometry = new THREE.CylinderGeometry(0.005, 0.005, stemHeight, 12);
+        const stemMaterial = new THREE.MeshBasicMaterial({ color: new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue("--pin-color").trim() || "#f472b6"), transparent: true, opacity: 0.7 });
+        const stem = new THREE.Mesh(stemGeometry, stemMaterial);
+        stem.position.copy(stemCenter);
+        stem.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
+
+        const headGeometry = new THREE.SphereGeometry(0.03, 18, 18);
+        const headMaterial = new THREE.MeshBasicMaterial({ color: stemMaterial.color.clone() });
+        const head = new THREE.Mesh(headGeometry, headMaterial);
+        head.position.copy(headPosition);
+
+        pinGroup.add(stem);
+        pinGroup.add(head);
+        pinGroup.userData = { feature, head, stem };
+
+        globeGroup.add(pinGroup);
+        pinObjects.push(head);
+      }
+
+      function setHighlightedState(name) {
+        if (highlightedState === name) return;
+        if (highlightedState && stateGroups.has(highlightedState)) {
+          stateGroups.get(highlightedState).children.forEach((line) => {
+            line.material.color.copy(baseStateMaterial.color);
+            line.material.opacity = baseStateMaterial.opacity;
+          });
+        }
+        highlightedState = name;
+        if (highlightedState && stateGroups.has(highlightedState)) {
+          stateGroups.get(highlightedState).children.forEach((line) => {
+            line.material.color.copy(highlightMaterial.color);
+            line.material.opacity = highlightMaterial.opacity;
+          });
         }
       }
 
       function updateSidebar(name) {
-        const title = document.getElementById("state-name");
-        const capital = document.getElementById("state-capital");
-        const region = document.getElementById("state-region");
-        const summary = document.getElementById("state-summary");
-        const population = document.getElementById("state-pop");
-        const nickname = document.getElementById("state-nickname");
-
         const data = stateDetails[name];
-
         if (data) {
-          title.textContent = name;
-          capital.textContent = `Capital — ${data.capital}`;
-          region.textContent = `Region — ${data.region}`;
-          summary.textContent = data.summary;
-          population.textContent = data.population;
-          nickname.textContent = data.nickname;
+          stateName.textContent = name;
+          stateCapital.textContent = `Capital — ${data.capital}`;
+          stateRegion.textContent = `Region — ${data.region}`;
+          stateSummary.textContent = data.summary;
+          statePop.textContent = data.population;
+          stateNickname.textContent = data.nickname;
         } else {
-          title.textContent = name;
-          capital.textContent = "Capital — Not available";
-          region.textContent = "Region — United States";
-          summary.textContent =
-            "Detailed information for this location is on the way. Try another state!";
-          population.textContent = "—";
-          nickname.textContent = "—";
+          stateName.textContent = name;
+          stateCapital.textContent = "Capital — Not available";
+          stateRegion.textContent = "Region — United States";
+          stateSummary.textContent = "Detailed information for this location is on the way. Try another state!";
+          statePop.textContent = "—";
+          stateNickname.textContent = "—";
         }
       }
 
-      function rotateTo(feature) {
-        const centroid = d3.geoCentroid(feature);
-        const currentRotate = projection.rotate();
-        const targetRotate = [-centroid[0], -centroid[1]];
-
-        d3.transition()
-          .duration(1200)
-          .tween("rotate", () => {
-            const interpolate = d3.interpolate(currentRotate, targetRotate);
-            return (t) => {
-              projection.rotate(interpolate(t));
-              redraw();
-            };
-          });
+      function resizeRenderer() {
+        const width = canvas.clientWidth;
+        const height = canvas.clientHeight;
+        renderer.setSize(width, height, false);
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
       }
 
-      function stopAutoRotation() {
-        if (autoRotate) {
-          autoRotate = false;
-          if (rotationTimer) {
-            rotationTimer.stop();
+      function renderTooltipForPin(pin, feature) {
+        const rect = canvas.getBoundingClientRect();
+        tempV.copy(pin.position);
+        tempV.project(camera);
+        const x = (tempV.x * 0.5 + 0.5) * rect.width + rect.left;
+        const y = (-tempV.y * 0.5 + 0.5) * rect.height + rect.top;
+        tooltip.style.left = `${x}px`;
+        tooltip.style.top = `${y}px`;
+        tooltip.textContent = feature.properties.name;
+        tooltip.style.opacity = 1;
+      }
+
+      function hideTooltip() {
+        tooltip.style.opacity = 0;
+      }
+
+      function updatePointer(event) {
+        const rect = canvas.getBoundingClientRect();
+        pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      }
+
+      function onPointerMove(event) {
+        updatePointer(event);
+        raycaster.setFromCamera(pointer, camera);
+        const intersects = raycaster.intersectObjects(pinObjects);
+        if (intersects.length > 0) {
+          const pin = intersects[0].object;
+          const feature = pin.parent.userData.feature;
+          renderTooltipForPin(pin, feature);
+          if (hoveredPin !== pin) {
+            hoveredPin = pin;
+          }
+          setHighlightedState(feature.properties.name);
+          updateSidebar(feature.properties.name);
+        } else {
+          hoveredPin = null;
+          hideTooltip();
+          if (activeState) {
+            setHighlightedState(activeState);
+            updateSidebar(activeState);
+          } else {
+            setHighlightedState(null);
           }
         }
       }
 
-      function attachInteractions(selection) {
-        selection
-          .on("pointerenter", function (event, d) {
-            stopAutoRotation();
-            d3.select(this)
-              .raise()
-              .transition()
-              .duration(200)
-              .attr("fill", "rgba(37, 99, 235, 0.45)");
-
-            tooltip
-              .style("opacity", 1)
-              .style("transform", "translate(-50%, -140%)")
-              .text(d.properties.name);
-          })
-          .on("pointermove", function (event) {
-            const rect = globeCard.getBoundingClientRect();
-            tooltip
-              .style("left", `${event.clientX - rect.left}px`)
-              .style("top", `${event.clientY - rect.top}px`);
-          })
-          .on("pointerleave", function () {
-            d3.select(this)
-              .transition()
-              .duration(200)
-              .attr("fill", "rgba(37, 99, 235, 0.25)");
-
-            tooltip.style("opacity", 0);
-          })
-          .on("pointerdown", function (event, d) {
-            event.preventDefault();
-            stopAutoRotation();
-            rotateTo(d);
-            updateSidebar(d.properties.name);
-          });
+      function findStateByLonLat(lon, lat) {
+        return statesFeatures.find((feature) => d3.geoContains(feature, [lon, lat]));
       }
 
-      function enableAutoRotation() {
-        rotationTimer = d3.timer((elapsed) => {
-          const rotate = projection.rotate();
-          projection.rotate([rotate[0] + 0.02, rotate[1], rotate[2]]);
-          redraw();
-
-          if (elapsed > 18000) {
-            rotationTimer.stop();
-            autoRotate = false;
+      function onClick(event) {
+        updatePointer(event);
+        raycaster.setFromCamera(pointer, camera);
+        const pinHit = raycaster.intersectObjects(pinObjects);
+        if (pinHit.length > 0) {
+          const feature = pinHit[0].object.parent.userData.feature;
+          setHighlightedState(feature.properties.name);
+          updateSidebar(feature.properties.name);
+          activeState = feature.properties.name;
+          controls.autoRotate = false;
+          return;
+        }
+        const intersects = raycaster.intersectObject(globeMesh);
+        if (intersects.length > 0) {
+          const [lon, lat] = vector3ToLatLon(intersects[0].point);
+          const feature = findStateByLonLat(lon, lat);
+          if (feature) {
+            setHighlightedState(feature.properties.name);
+            updateSidebar(feature.properties.name);
+            activeState = feature.properties.name;
+            controls.autoRotate = false;
           }
-        });
+        }
       }
 
-      Promise.all([
-        d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json"),
-        new Promise((resolve) => setTimeout(resolve, 300))
-      ]).then(([us]) => {
+      async function init() {
+        resizeRenderer();
+        window.addEventListener("resize", resizeRenderer);
+        renderer.domElement.addEventListener("pointermove", onPointerMove);
+        renderer.domElement.addEventListener("click", onClick);
+
+        const [us] = await Promise.all([
+          d3.json("https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json")
+        ]);
         const states = topojson.feature(us, us.objects.states);
         statesFeatures = states.features;
 
-        const statePaths = statesGroup
-          .selectAll("path")
-          .data(statesFeatures)
-          .enter()
-          .append("path")
-          .attr("fill", "rgba(37, 99, 235, 0.25)")
-          .attr("stroke", "rgba(15, 23, 42, 0.24)")
-          .attr("stroke-width", 0.8)
-          .attr("cursor", "pointer");
+        statesFeatures.forEach((feature) => {
+          const group = createStateLines(feature);
+          globeGroup.add(group);
+          stateGroups.set(feature.properties.name, group);
+          createStatePin(feature);
+        });
 
-        attachInteractions(statePaths);
-        resize();
-        window.addEventListener("resize", resize);
-        enableAutoRotation();
+        updateColors();
+      }
+
+      function animate() {
+        requestAnimationFrame(animate);
+        controls.update();
+        renderer.render(scene, camera);
+      }
+
+      function updateColors() {
+        const bg = backgroundPicker.value;
+        const globeColor = globePicker.value;
+        const highlightColor = highlightPicker.value;
+        const pinColor = pinPicker.value;
+
+        document.body.style.background = bg;
+        globeMaterial.color.set(globeColor);
+        highlightMaterial.color.set(highlightColor);
+        baseStateMaterial.color.set(globeColor);
+        baseStateMaterial.color.offsetHSL(0, -0.4, -0.35);
+        stateGroups.forEach((group) => {
+          const name = group.userData.feature.properties.name;
+          group.children.forEach((line) => {
+            if (name === highlightedState) {
+              line.material.color.set(highlightColor);
+              line.material.opacity = highlightMaterial.opacity;
+            } else {
+              line.material.color.copy(baseStateMaterial.color);
+              line.material.opacity = baseStateMaterial.opacity;
+            }
+          });
+        });
+        pinObjects.forEach((pin) => {
+          pin.material.color.set(pinColor);
+          pin.parent.userData.stem.material.color.set(pinColor);
+        });
+      }
+
+      function buildExportMarkup() {
+        const bg = backgroundPicker.value;
+        const globeColor = globePicker.value;
+        const highlightColor = highlightPicker.value;
+        const pinColor = pinPicker.value;
+        const markup = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>USA Globe Widget</title>
+  <style>
+    body { margin: 0; background: ${bg}; font-family: 'Inter', sans-serif; }
+    #globe-container { position: relative; width: 100vw; height: 100vh; overflow: hidden; }
+    #globe-canvas { width: 100%; height: 100%; display: block; }
+    #tooltip { position: absolute; padding: 6px 10px; background: rgba(15, 23, 42, 0.9); color: #f8fafc; border-radius: 8px; font-size: 13px; pointer-events: none; transform: translate(-50%, -120%); opacity: 0; transition: opacity 150ms ease; }
+  </style>
+</head>
+<body>
+  <div id="globe-container">
+    <canvas id="globe-canvas"></canvas>
+    <div id="tooltip"></div>
+  </div>
+  <script type="module">
+    import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.159/build/three.module.js';
+    import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.159/examples/jsm/controls/OrbitControls.js';
+    import * as d3 from 'https://cdn.jsdelivr.net/npm/d3@7/+esm';
+    import * as topojson from 'https://cdn.jsdelivr.net/npm/topojson-client@3/+esm';
+
+    const canvas = document.getElementById('globe-canvas');
+    const tooltip = document.getElementById('tooltip');
+    const scene = new THREE.Scene();
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+    camera.position.set(0, 0, 4);
+
+    const globeGroup = new THREE.Group();
+    scene.add(globeGroup);
+
+    scene.add(new THREE.AmbientLight(0x88aaff, 0.6));
+    const directional = new THREE.DirectionalLight(0xffffff, 1.2);
+    directional.position.set(5, 3, 5);
+    scene.add(directional);
+
+    const globeMaterial = new THREE.MeshStandardMaterial({ color: '${globeColor}', metalness: 0.25, roughness: 0.4, transparent: true, opacity: 0.9, emissive: '#0e7490', emissiveIntensity: 0.25 });
+    const globeMesh = new THREE.Mesh(new THREE.SphereGeometry(1.2, 128, 128), globeMaterial);
+    globeGroup.add(globeMesh);
+
+    const wireMaterial = new THREE.LineBasicMaterial({ color: '${globeColor}', opacity: 0.32, transparent: true });
+    globeGroup.add(new THREE.LineSegments(new THREE.WireframeGeometry(new THREE.SphereGeometry(1.205, 32, 32)), wireMaterial));
+
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    const tempV = new THREE.Vector3();
+    let statesFeatures = [];
+    const stateGroups = new Map();
+    const pinObjects = [];
+    let hoveredPin = null;
+
+    const baseMaterial = new THREE.LineBasicMaterial({ color: '${globeColor}', transparent: true, opacity: 0.35 });
+    const highlightMaterial = new THREE.LineBasicMaterial({ color: '${highlightColor}', transparent: true, opacity: 0.92 });
+
+    function latLongToVector3(lat, lon, radius = 1.205) {
+      const phi = (90 - lat) * (Math.PI / 180);
+      const theta = (lon + 180) * (Math.PI / 180);
+      return new THREE.Vector3(
+        -radius * Math.sin(phi) * Math.cos(theta),
+        radius * Math.cos(phi),
+        radius * Math.sin(phi) * Math.sin(theta)
+      );
+    }
+
+    function vector3ToLatLon(vector) {
+      const v = vector.clone().normalize();
+      const lat = 90 - (Math.acos(v.y) * 180) / Math.PI;
+      const lon = ((Math.atan2(v.z, -v.x) * 180) / Math.PI) - 180;
+      return [lon, lat];
+    }
+
+    function resizeRenderer() {
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+    }
+
+    function updatePointer(event) {
+      const rect = canvas.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+    }
+
+    function renderTooltip(pin, feature) {
+      const rect = canvas.getBoundingClientRect();
+      tempV.copy(pin.position).project(camera);
+      const x = (tempV.x * 0.5 + 0.5) * rect.width + rect.left;
+      const y = (-tempV.y * 0.5 + 0.5) * rect.height + rect.top;
+      tooltip.style.left = x + 'px';
+      tooltip.style.top = y + 'px';
+      tooltip.textContent = feature.properties.name;
+      tooltip.style.opacity = 1;
+    }
+
+    function hideTooltip() {
+      tooltip.style.opacity = 0;
+    }
+
+    function createStateLines(feature) {
+      const group = new THREE.Group();
+      const coordinates = feature.geometry.coordinates;
+      const multi = feature.geometry.type === 'MultiPolygon' ? coordinates : [coordinates];
+      multi.forEach((polygon) => {
+        polygon.forEach((ring) => {
+          const points = ring.map(([lon, lat]) => latLongToVector3(lat, lon));
+          const geometry = new THREE.BufferGeometry().setFromPoints(points);
+          const line = new THREE.LineLoop(geometry, baseMaterial.clone());
+          group.add(line);
+        });
+      });
+      group.userData.feature = feature;
+      return group;
+    }
+
+    function createStatePin(feature) {
+      const centroid = d3.geoCentroid(feature);
+      const [lon, lat] = centroid;
+      const normal = latLongToVector3(lat, lon, 1).normalize();
+      const stemHeight = 0.16;
+      const stemCenter = normal.clone().multiplyScalar(1.2 + stemHeight / 2);
+      const headPosition = normal.clone().multiplyScalar(1.26);
+      const pinGroup = new THREE.Group();
+
+      const stemMaterial = new THREE.MeshBasicMaterial({ color: '${pinColor}', transparent: true, opacity: 0.7 });
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, stemHeight, 12), stemMaterial);
+      stem.position.copy(stemCenter);
+      stem.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), normal);
+
+      const headMaterial = new THREE.MeshBasicMaterial({ color: '${pinColor}' });
+      const head = new THREE.Mesh(new THREE.SphereGeometry(0.03, 18, 18), headMaterial);
+      head.position.copy(headPosition);
+
+      pinGroup.add(stem);
+      pinGroup.add(head);
+      pinGroup.userData = { feature, stem, head };
+      globeGroup.add(pinGroup);
+      pinObjects.push(head);
+    }
+
+    function setHighlighted(name) {
+      stateGroups.forEach((group, key) => {
+        group.children.forEach((line) => {
+          line.material.color.copy(key === name ? highlightMaterial.color : baseMaterial.color);
+        });
+      });
+    }
+
+    function findStateByLonLat(lon, lat) {
+      return statesFeatures.find((feature) => d3.geoContains(feature, [lon, lat]));
+    }
+
+    canvas.addEventListener('pointermove', (event) => {
+      updatePointer(event);
+      raycaster.setFromCamera(pointer, camera);
+      const intersects = raycaster.intersectObjects(pinObjects);
+      if (intersects.length) {
+        const pin = intersects[0].object;
+        const feature = pin.parent.userData.feature;
+        renderTooltip(pin, feature);
+        if (hoveredPin !== pin) {
+          hoveredPin = pin;
+        }
+        setHighlighted(feature.properties.name);
+      } else {
+        hoveredPin = null;
+        hideTooltip();
+      }
+    });
+
+    canvas.addEventListener('click', (event) => {
+      updatePointer(event);
+      raycaster.setFromCamera(pointer, camera);
+      const pinHit = raycaster.intersectObjects(pinObjects);
+      if (pinHit.length) {
+        const feature = pinHit[0].object.parent.userData.feature;
+        setHighlighted(feature.properties.name);
+        return;
+      }
+      const intersects = raycaster.intersectObject(globeMesh);
+      if (intersects.length) {
+        const [lon, lat] = vector3ToLatLon(intersects[0].point);
+        const feature = findStateByLonLat(lon, lat);
+        if (feature) {
+          setHighlighted(feature.properties.name);
+        }
+      }
+    });
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.enablePan = false;
+    controls.minDistance = 2.5;
+    controls.maxDistance = 6;
+    controls.autoRotate = true;
+    controls.autoRotateSpeed = 0.6;
+
+    function animate() {
+      requestAnimationFrame(animate);
+      controls.update();
+      renderer.render(scene, camera);
+    }
+
+    async function init() {
+      window.addEventListener('resize', resizeRenderer);
+      resizeRenderer();
+      const us = await d3.json('https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json');
+      statesFeatures = topojson.feature(us, us.objects.states).features;
+      statesFeatures.forEach((feature) => {
+        const group = createStateLines(feature);
+        stateGroups.set(feature.properties.name, group);
+        globeGroup.add(group);
+        createStatePin(feature);
+      });
+      animate();
+    }
+
+    init();
+  </script>
+</body>
+</html>`;
+        return markup;
+      }
+
+      backgroundPicker.addEventListener("input", updateColors);
+      globePicker.addEventListener("input", updateColors);
+      highlightPicker.addEventListener("input", () => {
+        updateColors();
+        if (highlightedState && stateGroups.has(highlightedState)) {
+          stateGroups.get(highlightedState).children.forEach((line) => {
+            line.material.color.set(highlightPicker.value);
+          });
+        }
+      });
+      pinPicker.addEventListener("input", updateColors);
+
+      exportBtn.addEventListener("click", () => {
+        exportText.value = buildExportMarkup();
+        exportModal.classList.add("active");
       });
 
-      redraw();
+      closeExportBtn.addEventListener("click", () => {
+        exportModal.classList.remove("active");
+      });
+
+      exportModal.addEventListener("click", (event) => {
+        if (event.target === exportModal) {
+          exportModal.classList.remove("active");
+        }
+      });
+
+      init();
+      animate();
     </script>
   </body>
 </html>
